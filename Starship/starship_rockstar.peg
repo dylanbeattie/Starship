@@ -16,7 +16,21 @@ say = 'say'i / 'shout'i / 'scream'i / 'whisper'i
 
 output<RSOutput> = say _ e:expression { new RSOutput(e) }
 
-expression<RSExpression> = string / number
+expression<RSExpression> = literal
+
+literal<RSExpression> = constant / number / string
+
+constant<RSExpression> = empty_string / null / true / false / mysterious
+
+empty_string<RSConstant> = ('silent'i / 'silence'i) !letter { new RSConstant(String.Empty) }
+
+true<RSConstant> 	= ('true'i / 'ok'i / 'right'i / 'yes'i) !letter { new RSConstant(true) }
+
+false<RSConstant> 	= ('false'i / 'lies'i / 'wrong'i / 'no'i) !letter { new RSConstant(false) }
+
+null<RSConstant> 	= ('null'i / 'nothing'i / 'nowhere'i / 'nobody'i / 'empty'i / 'gone'i) { new RSConstant(null) }
+
+mysterious<RSMysterious> = 'mysterious'  { new RSMysterious() }
 
 string<RSString> = '"' s:[^"]+ '"' { new RSString(String.Concat(s)) }
 
@@ -30,3 +44,9 @@ _           = (whitespace / comment)*
 
 EOL = [\r\n]+
 EOF = !.
+
+
+uppercase_letter = [A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞĀĂĄĆĈĊČĎĐĒĔĖĘĚĜĞĠĢĤĦĨĪĬĮİĲĴĶĸĹĻĽĿŁŃŅŇŊŌŎŐŒŔŖŘŚŜŞŠŢŤŦŨŪŬŮŰŲŴŶŸŹŻŽ]
+lowercase_letter = [a-zàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþāăąćĉċčďđēĕėęěĝğġģĥħĩīĭįıĳĵķĸĺļľŀłńņňŋōŏőœŕŗřśŝşšţťŧũūŭůűųŵŷÿźżžŉß]
+
+letter = uppercase_letter / lowercase_letter
