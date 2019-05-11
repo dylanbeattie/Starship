@@ -4,5 +4,14 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.2</TargetFramework>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <PegGrammar Include="starship_rockstar.peg" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="Pegasus" Version="4.1.0" />
+  </ItemGroup>
 
 </Project>

@@ -1,0 +1,26 @@
+@namespace Starship
+@classname Parser
+@using Starship.Rockstar
+
+program<RSProgram>  = lines:line+ { new RSProgram(lines) }
+line<RSStatement>   = _ s:statement _ EOL+ { s }
+                    / _ s:statement _ EOF { s }
+
+statement<RSStatement> = output
+
+output<RSOutput> = 'say' _ e:expression { new RSOutput(e) }
+
+expression<RSExpression> = string / number
+
+string<RSString> = '"' s:[^"]+ '"' { new RSString(String.Concat(s)) }
+
+digits = d:[0-9]+
+
+number<RSNumber> = d:(digits ('.' digits)?) { new RSNumber(decimal.Parse(String.Concat(d))) }
+
+whitespace  = [ \t]
+comment     = '(' [^)]* ')'
+_           = (whitespace / comment)*
+
+EOL = [\r\n]+
+EOF = !.
