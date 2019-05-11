@@ -13,7 +13,7 @@ namespace Starship.Rockstar.Interpreter {
     }
 
     public class RSEnvironment {
-        Action<object> Output = o => Console.WriteLine(o == null ? "(null)" : o.ToString());
+        public Action<object> Output = o => Console.WriteLine(o == null ? "(null)" : o.ToString());
         public RSResult Evaluate(RSStatement statement) {
             RSResult result = null;
             switch (statement) {

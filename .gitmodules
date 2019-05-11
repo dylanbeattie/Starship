@@ -1,0 +1,4 @@
+[submodule "Rockstar"]
+	path = Rockstar
+	url = git@github.com:RockstarLang/Rockstar.git
+	branch = master

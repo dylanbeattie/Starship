@@ -8,7 +8,9 @@ line<RSStatement>   = _ s:statement _ EOL+ { s }
 
 statement<RSStatement> = output
 
-output<RSOutput> = 'say' _ e:expression { new RSOutput(e) }
+say = 'say'i / 'shout'i / 'scream'i / 'whisper'i
+
+output<RSOutput> = say _ e:expression { new RSOutput(e) }
 
 expression<RSExpression> = string / number
 
