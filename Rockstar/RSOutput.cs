@@ -7,11 +7,11 @@ namespace Starship {
             public override void Render(StringBuilder sb, int depth = 0) {
                 sb.Append(String.Empty.PadLeft(depth, ' '));
                 sb.AppendLine("output:");
-                this.expression.Render(sb, depth + 2);
+                this.Expression.Render(sb, depth + 2);
             }
-            public readonly RSExpression expression;
+            public readonly RSExpression Expression;
             public RSOutput(RSExpression expression) {
-                this.expression = expression;
+                this.Expression = expression;
             }
         }
     }
