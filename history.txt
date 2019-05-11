@@ -1,0 +1,30 @@
+ 3021  open .
+ 3022  ls
+ 3023  dotnet new sln
+ 3024  ls -a
+ 3025  ls -la
+ 3026  dotnet add Starship
+ 3027  ls -la
+ 3028  cat Starship.sln 
+ 3029  dotnet sln add Starship
+ 3030  dotnet new classlib Starship.Tests
+ 3031  dotnet new classlib -o Starship.Tests
+ 3032  dotnet sln add Starship.Tests
+ 3033  dotnet run
+ 3034  dotnet sln remove Starship.Tests
+ 3035  rm -rf Starship.Tests/
+ 3036  dotnet new xunit Starship.Tests
+ 3037  dotnet new xunit -o Starship.Tests
+ 3038  dotnet sln add Starship.Tests/
+ 3039  dotnet build
+ 3040  dotnet test
+ 3041  git status
+ 3042  git add .
+ 3043  git status
+ 3044  git add .
+ 3045  git commit -m 'Added solution file; created xUnit test project'
+ 3046  git status
+ 3047  history
+ 3048  history --help
+ 3049  history 20
+ 3050  history 30 > history.txt
