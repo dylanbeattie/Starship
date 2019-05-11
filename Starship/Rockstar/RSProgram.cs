@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Starship {
@@ -17,8 +18,8 @@ namespace Starship {
             }
 
             public IList<RSStatement> Statements { get; } = new List<RSStatement>();
-            public RSProgram(IList<RSStatement> statements) {
-                this.Statements = statements;
+            public RSProgram(IEnumerable<RSStatement> statements) {
+                this.Statements = statements.ToList();
             }
         }
     }

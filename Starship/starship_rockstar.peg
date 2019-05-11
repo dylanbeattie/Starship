@@ -1,10 +1,14 @@
 @namespace Starship
 @classname Parser
 @using Starship.Rockstar
+@using System.Linq
 
-program<RSProgram>  = lines:line+ { new RSProgram(lines) }
+program<RSProgram>  = lines:line+ { new RSProgram(lines.Where(l => l != null)) }
 line<RSStatement>   = _ s:statement _ EOL+ { s }
                     / _ s:statement _ EOF { s }
+                    / blank_line { null }
+
+blank_line = _ EOL
 
 statement<RSStatement> = output
 
