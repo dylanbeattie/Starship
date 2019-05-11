@@ -5,7 +5,7 @@ using Starship.Rockstar;
 namespace Starship {
     class Program {
         static void Main(string[] args) {
-            var source = System.IO.File.ReadAllText("../Rockstar/tests/fixtures/constants/constants.rock");
+            var source = System.IO.File.ReadAllText("Rockstar/tests/fixtures/" + args[0]);
             Console.WriteLine("======== SOURCE ========");
             Console.WriteLine(source);
             var parser = new Parser();

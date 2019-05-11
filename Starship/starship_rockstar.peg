@@ -16,9 +16,26 @@ say = 'say'i / 'shout'i / 'scream'i / 'whisper'i
 
 output<RSOutput> = say _ e:expression { new RSOutput(e) }
 
-expression<RSExpression> = literal
+expression<RSExpression> = arithmetic
 
-literal<RSExpression> = constant / number / string
+add 		= ('+' / 'plus' / 'with') !letter 
+subtract 	= ('-' / 'minus' / 'without') !letter 
+multiply 	= ('*' / 'times' / 'of') !letter 
+divide 		= ('/' / 'over' / 'between') !letter 
+
+arithmetic<RSExpression> 
+    = lhs:product _ add _ rhs:arithmetic { new RSBinary(RSOperator.Add, lhs, rhs) }
+    / lhs:product _ subtract _ rhs:arithmetic { new RSBinary(RSOperator.Subtract, lhs, rhs) }
+    / product
+
+product<RSExpression> 
+    = lhs:simple_expression _ multiply _ rhs:product  { new RSBinary(RSOperator.Multiply, lhs, rhs) }
+    / lhs:simple_expression _ divide _ rhs:product  { new RSBinary(RSOperator.Divide, lhs, rhs) }
+    / simple_expression
+
+simple_expression<RSExpression> = constant / literal
+
+literal<RSExpression> = number / string
 
 constant<RSExpression> = empty_string / null / true / false / mysterious
 
