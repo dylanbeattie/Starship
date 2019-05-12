@@ -18,8 +18,9 @@ Then there's the whole Jefferson Airplane > Jefferson Starship > Starship naming
 of .NET Framework vs Core vs Standard - not to mention that lyric from 'We Built This City'
 
 > Someone's always playing corporation games
+>
 > Who cares they're always changing corporation names
 
-And because the [guitar solo on 'Nothing's Gonna Stop Us Now'](https://youtu.be/3wxyN3z9PL4?t=171) is absolutely epic.
+If you're not familiar with Starship, check 'em out. They're great. The [guitar solo on 'Nothing's Gonna Stop Us Now'](https://youtu.be/3wxyN3z9PL4?t=171) is particularly epic.
 
 
