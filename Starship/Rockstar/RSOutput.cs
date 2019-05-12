@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Starship {
     namespace Rockstar {
-        public class RSOutput : RSStatement {
+        public class RSOutput : RSToken {
             public override void Render(StringBuilder sb, int depth = 0) {
                 sb.Append(String.Empty.PadLeft(depth, ' '));
                 sb.AppendLine("output:");

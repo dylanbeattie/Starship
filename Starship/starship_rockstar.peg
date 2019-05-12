@@ -3,37 +3,100 @@
 @using Starship.Rockstar
 @using System.Linq
 
-program<RSProgram>  = lines:line+ { new RSProgram(lines.Where(l => l != null)) }
-line<RSStatement>   = _ s:statement _ EOL+ { s }
+program<RSBlock>  = lines:line+ { new RSBlock(lines.Where(l => l != null)) }
+
+line<RSToken>   = _ s:statement _ EOL+ { s }
                     / _ s:statement _ EOF { s }
-                    / blank_line { null }
+                    / _ EOL { null }
 
-blank_line = _ EOL
+whitespace  = [ \t]
+comment     = '(' [^)]* ')'
+noise 	    = [;,?!&.]
+_           = (whitespace / comment)*
+EOL         = (whitespace/comment/noise)* [\r\n]+
+EOF         = !.
 
-statement<RSStatement> = output
+ignore_rest_of_line = (_[^\n]*)
+
+statement<RSToken> = s:(break / continue / function / function_call
+			/ return / loop / conditional / operation / expression) { s }
+
+break<RSToken> = 'break'i ignore_rest_of_line { new RSBreak() }
+
+continue<RSToken> = ('continue'i ignore_rest_of_line / 'take it to the top'i) { new RSContinue() }
+
+function<RSToken> = name:variable _ 'takes'i _ args:variable_list EOL body:block EOL
+	{ new RSFunction(name, args, body) }
+
+expression_list_separator = (_ ', and' _ / _('&' / ',' / "'n'")_)
+
+variable_list_separator   = expression_list_separator / _ 'and' _
+
+variable_list<List<RSVariable>> 
+    = head:variable variable_list_separator tail:variable_list { {
+        var list = new List<RSVariable>();
+        list.Add(head);
+        list.AddRange(tail);
+        return(list);
+    } }
+    / head:variable { new List<RSVariable> { head } }
+
+function_call<RSCall> 
+    = 'unite'i _ e:expression { new RSCall(RSBuiltIn.Unite, new List<RSExpression> { e } ) }
+    / name:variable _ 'taking'i _ args:expression_list 	{ new RSCall(name, args) }
+
+expression_list<List<RSExpression>> 
+    = head:simple_expression expression_list_separator tail:expression_list
+	{ { 
+        var list = new List<RSExpression>();
+        list.Add(head);
+        list.AddRange(tail);
+        return list;
+    } }
+  / arg:simple_expression { new List<RSExpression> { arg }  }
+
+
+return<RSReturn> = ('return'i / 'give back'i) _ e:expression { new RSReturn(e) }
+
+operation<RSToken> = readline / output / crement / assignment
+
+readline<RSToken> 
+    = 'listen to'i _ v:variable  { new RSAssign(v, new RSListen()) }
+	/ 'listen'i { new RSListen() }
+
+continuation<RSToken> = EOL _ s:statement { s };
+
+block<RSBlock> 	
+    = head:statement tail:(continuation)+ { new RSBlock(head, tail) } 
+    / s:statement { new RSBlock(s) }
+
+consequent<RSBlock> 	
+    = _ s:statement { new RSBlock(s) }
+    / EOL b:block { b }
+
+alternate<RSBlock> 	
+    = _     'else'i _ a:statement { new RSBlock(a) }
+    / EOL+  'else'i _ a:statement { new RSBlock(a) }
+    / EOL+  'else'i EOL a:block { a }
+    / EOL   { null }
+
+conditional<RSConditional> 
+    = 'if'i _ e:expression c:consequent a:alternate { new RSConditional(e, c, a) }
+    / 'if'i _ e:expression c:consequent { new RSConditional(e, c) }
+
+loopable<RSBlock> 	
+    = _ s:statement { new RSBlock(s) }
+    / EOL s:block EOL { s }
+
+loop<RSToken> 	
+    = 'while'i _ e:expression c:loopable { new RSWhile(e,c) }
+    / 'until'i _ e:expression c:loopable { new RSUntil (e, c) }
 
 say = 'say'i / 'shout'i / 'scream'i / 'whisper'i
 
 output<RSOutput> = say _ e:expression { new RSOutput(e) }
 
-expression<RSExpression> = arithmetic
-
-add 		= ('+' / 'plus' / 'with') !letter 
-subtract 	= ('-' / 'minus' / 'without') !letter 
-multiply 	= ('*' / 'times' / 'of') !letter 
-divide 		= ('/' / 'over' / 'between') !letter 
-
-arithmetic<RSExpression> 
-    = lhs:product _ add _ rhs:arithmetic { new RSBinary(RSOperator.Add, lhs, rhs) }
-    / lhs:product _ subtract _ rhs:arithmetic { new RSBinary(RSOperator.Subtract, lhs, rhs) }
-    / product
-
-product<RSExpression> 
-    = lhs:simple_expression _ multiply _ rhs:product  { new RSBinary(RSOperator.Multiply, lhs, rhs) }
-    / lhs:simple_expression _ divide _ rhs:product  { new RSBinary(RSOperator.Divide, lhs, rhs) }
-    / simple_expression
-
-simple_expression<RSExpression> = constant / literal
+simple_expression<RSExpression>  =   function_call / constant / lookup / literal
 
 literal<RSExpression> = number / string
 
@@ -41,9 +104,9 @@ constant<RSExpression> = empty_string / null / true / false / mysterious
 
 empty_string<RSConstant> = ('silent'i / 'silence'i) !letter { new RSConstant(String.Empty) }
 
-true 	= ('true'i / 'ok'i / 'right'i / 'yes'i) !letter { new RSConstant(true) }
+true<RSConstant> 	= ('true'i / 'ok'i / 'right'i / 'yes'i) !letter { new RSConstant(true) }
 
-false 	= ('false'i / 'lies'i / 'wrong'i / 'no'i) !letter { new RSConstant(false) }
+false<RSConstant> 	= ('false'i / 'lies'i / 'wrong'i / 'no'i) !letter { new RSConstant(false) }
 
 null<RSConstant> 	= ('null'i / 'nothing'i / 'nowhere'i / 'nobody'i / 'empty'i / 'gone'i) { new RSConstant(null) }
 
@@ -57,15 +120,144 @@ number<RSNumber>
     = d:('-'? digits ('.' digits)?) { new RSNumber(decimal.Parse(String.Concat(d))) }
     / d:('-'? '.' digits) { new RSNumber(decimal.Parse(String.Concat(d))) }
 
-whitespace  = [ \t]
-comment     = '(' [^)]* ')'
-_           = (whitespace / comment)*
 
-EOL = [\r\n]+
-EOF = !.
+expression<RSExpression> = boolean
 
+boolean<RSExpression> = nor
+
+nor<RSExpression> = lhs:or _ 'nor' _ rhs:nor { new RSBinary(RSOperator.Nor, lhs, rhs) } / or
+
+or<RSExpression> = lhs:and _ 'or' _ rhs:or { new RSBinary(RSOperator.Or, lhs, rhs) } / and
+
+and<RSExpression> = lhs:equality_check _ 'and' _ rhs:and { new RSBinary(RSOperator.And, lhs, rhs) } / equality_check
+
+eq<RSComparator> 
+    = ('aint'i / 'ain\'t'i) { RSComparator.NotEqual } 
+    / ('is'i / 'are'i) { RSComparator.Equal }
+
+equality_check<RSExpression> = lhs:not _ c:eq _ rhs:equality_check { new RSComparison(c, lhs, rhs) } / not
+
+not<RSExpression> = 'not' _ e:not { new RSNegate(e) } 
+    / comparison
+
+comparison<RSExpression> = lhs:arithmetic _ c:comparator _ rhs:comparison { new RSComparison(c, lhs, rhs) }
+    / arithmetic
+
+greater 	= ('higher'i /'greater'i / 'bigger'i / 'stronger'i)
+smaller	 	= ('lower'i /'less'i / 'smaller'i / 'weaker'i)
+great	= ('high'i / 'great'i / 'big'i / 'strong'i)
+small	= ('low'i / 'small'i / 'weak'i)
+
+comparator<RSComparator> 	= 	'is'i _ greater _ 'than'i { RSComparator.GreaterThan }
+            / 	'is'i _ smaller _ 'than'i { RSComparator.LessThan }
+            /	'is'i _ 'as'i _ great _ 'as'i { RSComparator.GreaterThanOrEqualTo }
+            /	'is'i _ 'as'i _ small _ 'as'i { RSComparator.LessThanOrEqualTo }
+
+compoundable_operator<RSOperator> = add / subtract / multiply / divide
+
+pronoun<RSPronoun> = p:(
+    'they'i/'them'i/'she'i/'him'i/'her'i/'hir'i/'zie'i/'zir'i/'xem'i/'ver'i/'ze'i/'ve'i/'xe'i/'it'i/'he'i
+    ) !letter
+    { new RSPronoun(p) }
+
+lookup<RSExpression> 	
+    = 'rock'i _ v:variable { new RSEnlist(v) }
+    / v:variable { new RSLookup(v) }
+
+
+common_prefix = ( 'an'i / 'a'i / 'the'i / 'my'i / 'your'i)
 
 uppercase_letter = [A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞĀĂĄĆĈĊČĎĐĒĔĖĘĚĜĞĠĢĤĦĨĪĬĮİĲĴĶĸĹĻĽĿŁŃŅŇŊŌŎŐŒŔŖŘŚŜŞŠŢŤŦŨŪŬŮŰŲŴŶŸŹŻŽ]
 lowercase_letter = [a-zàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþāăąćĉċčďđēĕėęěĝğġģĥħĩīĭįıĳĵķĸĺļľŀłńņňŋōŏőœŕŗřśŝşšţťŧũūŭůűųŵŷÿźżžŉß]
 
 letter = uppercase_letter / lowercase_letter
+
+common_variable = prefix:common_prefix _ name:(letter+)
+        { (prefix + "_" + String.Concat(name)).ToLowerInvariant() };
+
+is = ('\'s' / (_ ('=' / 'is 'i / 'was 'i / 'are 'i / 'were 'i)))
+
+assignment<RSAssign> 
+    = v:variable is _ e:(literal / poetic_number) { new RSAssign(v,e) }
+    / 'put'i _ e:expression _ 'into'i _ v:variable { new RSAssign(v,e) }
+    / v:variable _ 'says 'i e:poetic_string { new RSAssign(v,e) }
+//#  / 'rock'i _ v:variable _ 'with' _ e:expression_list { new RSEnlist(v, e) }
+//#  / 'rock'i _ v:variable _ 'like' _ e:(literal / poetic_number) { new RSEnlist(v,e) }
+//#  / 'roll'i _ source:variable _ 'into' _ targets:variable_list { new RSDelist(source, targets) }
+//#  / 'cast'i _ source:expression _ 'into'i _ target:variable { new RSCast(source, target) }    
+  / 'let'i _ v:variable _ 'be'i _ e:expression { new RSAssign(v,e) }
+  / 'let'i _ v:variable _ 'be'i o:compoundable_operator e:expression 
+    { new RSAssign(v, new RSBinary(o, new RSLookup(v), e)) }     
+
+poetic_string<RSString> = s:[^\n]*  { new RSString(String.Concat(s)) }
+
+poetic_number<RSNumber> 
+    = pogit_separator* integer_part:pogits pogit_separator* decimal_part:podec pogit_separator* { new RSNumber(decimal.Parse(integer_part +  "." + decimal_part)) }
+    / pogit_separator* integer_part:pogits pogit_separator* { new RSNumber(decimal.Parse(integer_part)) }
+
+podec 
+    = '.' podec_digit_separator* d:podec_digits podec_digit_separator* { String.Concat(d) }
+    / '.' podec_digit_separator* { "" }
+
+pogit_separator = ( whitespace / [0-9\',;:?!+_\-/] )
+
+pogits 
+    = pogit_separator* head:pogit pogit_separator+ tail:pogits { head + tail }
+    / d: pogit { d }
+
+podec_digit_separator = ( whitespace / comment / pogit_separator / '.')
+podec_digits 
+    = podec_digit_separator* head:pogit podec_digit_separator+ tail:podec_digits { head + tail }
+    / d: pogit { d }
+
+pogit = t:[A-Za-z']+ { (t.Count % 10).ToString() }
+
+// To disallow identifiers like 'My back is hurting' (which is illegal because 'back' is a keyword)
+// we need to explicitly define all language keywords, and they MUST be matched in descending order of length
+// because of Complicated Weird Parser Reasons.
+kw10 = 'mysterious'i
+kw8 = ( 'stronger'i / 'continue'i)
+kw7 = ( 'between'i / 'greater'i / 'nothing'i / 'nowhere'i / 'smaller'i / 'whisper'i / 'without'i)
+kw6 = ( 'ain\'t'i / 'bigger'i / 'decode'i / 'listen'i / 'nobody'i / 'return'i / 'scream'i / 'taking'i / 'weaker'i / 'higher'i
+    / 'strong'i)
+kw5 = ( 'break'i / 'build'i / 'empty'i / 'false'i / 'great'i / 'knock'i / 'lower'i / 'right'i / 'shout'i / 'small'i
+    / 'take 'i / 'takes'i / 'times'i / 'until'i / 'while'i / 'wrong'i / 'minus'i)
+kw4 = ( 'aint'i / 'back'i / 'down'i / 'else'i / 'give'i / 'gone'i / 'high'i / 'into'i / 'less'i / 'lies'i / 'null'i
+    / 'plus'i / 'rock'i / 'says'i / 'than'i / 'them'i / 'they'i / 'true'i / 'weak'i / 'were'i / 'your'i / 'over'i / 'with'i)
+kw3 = ( 'are'i / 'and'i / 'big'i / 'her'i / 'him'i / 'hir'i / 'it 'i / 'low'i / 'nor'i / 'not'i / 'put'i / 'say'i / 'she'i
+    / 'the'i / 'top'i / 'ver'i / 'was'i / 'xem'i / 'yes'i / 'zie'i / 'zir'i)
+kw2 = ( 'an'i / 'as'i / 'he'i / 'if'i / 'is'i / 'it'i / 'my'i / 'no'i / 'of'i / 'ok'i / 'or'i / 'to'i / 'up'i / 've'i
+    / 'xe'i / 'ze'i )
+kw1 = 'a'i
+
+keyword = (kw10 / kw8 / kw7 / kw6 / kw5 / kw5 / kw4 / kw3 / kw2 / kw1) !letter
+
+variable<RSVariable> 
+    = name:(common_variable / proper_variable / simple_variable) { new RSVariable(name) }
+    / pronoun
+
+simple_variable = !keyword name:(letter letter*) { String.Concat(name) } 
+
+proper_noun = !keyword uppercase_letter letter*
+proper_variable = head:(proper_noun (' ' proper_noun)*) { String.Concat(head).Replace(" ", "_").ToLowerInvariant()  }
+
+crement<RSToken> = increment / decrement
+
+increment<RSIncrement> = 'build'i _ v:variable _ t:('up'i noise*)+  { new RSIncrement(v, t.Count) }
+decrement<RSDecrement> = 'knock'i _ v:variable _ t:('down'i noise*)+ { new RSDecrement(v, t.Count) }
+
+add<RSOperator> 		= ('+' / 'plus' / 'with') !letter { RSOperator.Add }
+subtract<RSOperator> 	= ('-' / 'minus' / 'without') !letter { RSOperator.Subtract }
+multiply<RSOperator> 	= ('*' / 'times' / 'of') !letter { RSOperator.Multiply }
+divide<RSOperator> 		= ('/' / 'over' / 'between') !letter { RSOperator.Divide }
+
+arithmetic<RSExpression> 
+    = lhs:product _ op:add _ rhs:arithmetic { new RSBinary(op, lhs, rhs) }
+    / lhs:product _ op:subtract _ rhs:arithmetic { new RSBinary(op, lhs, rhs) }
+    / product
+
+product<RSExpression> 
+    = lhs:simple_expression _ op:multiply _ rhs:product  { new RSBinary(op, lhs, rhs) }
+    / lhs:simple_expression _ op:divide _ rhs:product  { new RSBinary(op, lhs, rhs) }
+    / simple_expression
+

@@ -1,5 +1,5 @@
 namespace Starship {
     namespace Rockstar {
-        public abstract class RSExpression : RSStatement { }
+        public abstract class RSExpression : RSToken { }
     }
 }

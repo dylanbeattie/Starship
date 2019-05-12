@@ -13,11 +13,11 @@ namespace Starship.Rockstar.Interpreter {
 
     public class RSEnvironment {
         public Action<object> Output = o => Console.WriteLine(o == null ? "(null)" : o.ToString());
-        public RSResult Evaluate(RSStatement statement) {
+        public RSResult Evaluate(RSToken statement) {
             RSResult result = null;
             switch (statement) {
-                case RSProgram p:
-                    foreach (var s in p.Statements) {
+                case RSBlock p:
+                    foreach (var s in p.Tokens) {
                         result = Evaluate(s);
                         if (result.Returnable) return (result);
                     }
