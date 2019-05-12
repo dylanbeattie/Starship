@@ -41,9 +41,9 @@ constant<RSExpression> = empty_string / null / true / false / mysterious
 
 empty_string<RSConstant> = ('silent'i / 'silence'i) !letter { new RSConstant(String.Empty) }
 
-true<RSConstant> 	= ('true'i / 'ok'i / 'right'i / 'yes'i) !letter { new RSConstant(true) }
+true 	= ('true'i / 'ok'i / 'right'i / 'yes'i) !letter { new RSConstant(true) }
 
-false<RSConstant> 	= ('false'i / 'lies'i / 'wrong'i / 'no'i) !letter { new RSConstant(false) }
+false 	= ('false'i / 'lies'i / 'wrong'i / 'no'i) !letter { new RSConstant(false) }
 
 null<RSConstant> 	= ('null'i / 'nothing'i / 'nowhere'i / 'nobody'i / 'empty'i / 'gone'i) { new RSConstant(null) }
 
@@ -53,7 +53,9 @@ string<RSString> = '"' s:[^"]+ '"' { new RSString(String.Concat(s)) }
 
 digits = d:[0-9]+
 
-number<RSNumber> = d:(digits ('.' digits)?) { new RSNumber(decimal.Parse(String.Concat(d))) }
+number<RSNumber> 
+    = d:('-'? digits ('.' digits)?) { new RSNumber(decimal.Parse(String.Concat(d))) }
+    / d:('-'? '.' digits) { new RSNumber(decimal.Parse(String.Concat(d))) }
 
 whitespace  = [ \t]
 comment     = '(' [^)]* ')'
