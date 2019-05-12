@@ -12,7 +12,7 @@ The Starship.Rockstar.Interpreter then 'runs' your program by interpreting the a
 It's a Rockstar tradition to name interpreters and compilers after rock bands... so if .NET was a rock band, what 
 band would it be? Only one answer, really... ;) 
 
-First, .NET is kinda enterprise-y, and there's the Starship Enterprise
+First, .NET is kinda enterprise-y, and Starship actually called their greatest hits album [Starship Enterprise](https://open.spotify.com/album/38uy9OtGLS5byFFgvOkBqm?si=X1SAijlnTOK2EnvyoMK_JQ).
 
 Then there's the whole Jefferson Airplane > Jefferson Starship > Starship naming confusion, which kinda reminds me
 of .NET Framework vs Core vs Standard - not to mention that lyric from 'We Built This City'
